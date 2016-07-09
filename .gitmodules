@@ -1,0 +1,3 @@
+[submodule "tps/crfasrnn"]
+	path = tps/crfasrnn
+	url = git@github.com:torrvision/crfasrnn.git
