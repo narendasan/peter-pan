@@ -31,13 +31,26 @@ def login():
     if not session.get('logged_in'):
         return render_template('login.html')
     else:
-        redirect(url_for('index'))
+        return redirect(url_for('index'))
 
 @app.route('/register', methods=['GET'])
 def register():
     return render_template('register.html')
-    
 
+@app.route('/do_register', methods=['POST'])
+def do_register():
+    username = str(request.form['username'])
+    password = str(request.form['password'])
+
+    # create a Session
+    Session = sessionmaker(bind=engine)
+    session = Session()
+     
+    user = User(username, password)
+    session.add(user)
+
+    return redirect(url_for('login'))
+ 
 
 @app.route('/do_login', methods=['POST'])
 def do_login():
