@@ -1,4 +1,6 @@
 import os
+from os import listdir
+from os.path import isfile, join
 
 from flask import Flask, flash, request, redirect, render_template, session, abort, url_for
 from sqlalchemy import create_engine
@@ -21,14 +23,14 @@ def index():
     if not session.get('logged_in'):
         return render_template('index.html')
     else:
-        return "Hello Boss!"
+        return redirect(url_for('files'))
 
 @app.route('/login', methods=['GET'])
 def login():
     if not session.get('logged_in'):
         return render_template('login.html')
     else:
-        return "Hello Boss!"
+        redirect(url_for('index'))
 
 @app.route('/do_login', methods=['POST'])
 def do_login():
@@ -43,16 +45,25 @@ def do_login():
         session['logged_in'] = True
     else:
         flash('Unrecognized account! Please try again.')
-    return index()
+    return redirect(url_for('index'))
+
+@app.route("/do_logout")
+def logout():
+    session['logged_in'] = False
+    return redirect(url_for('index'))
 
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
-@app.route("/do_logout")
-def logout():
-    session['logged_in'] = False
-    return home()
+@app.route('/files', methods=['GET'])
+def files():
+    if not session.get('logged_in'):
+        return redirect(url_for('login'))
+    else:
+        file_names = set([f for f in listdir(UPLOAD_FOLDER) if isfile(join(UPLOAD_FOLDER, f))])
+        file_names -= set(['.no_content'])
+        return render_template('files.html')
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
