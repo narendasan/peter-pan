@@ -1,16 +1,25 @@
 import json
 import os
+
+import lzma
+
 from os import listdir
 from os.path import isfile, join
+import shutil
+import tarfile
 import tempfile
 
+from backports import lzma as xz
 import cv2
 from flask import Flask, flash, request, redirect, render_template, session, abort, url_for, send_file
+from hashlib import sha256
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from subprocess import call
 from werkzeug.utils import secure_filename
 
 from models import User
+from tps import semantic_segmentation
 
 
 UPLOAD_FOLDER = 'files/uploaded'
@@ -114,23 +123,83 @@ def do_upload():
         flash('No selected file')
         return redirect(request.url)
     if file and allowed_file(file.filename):
-        filename = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(file.filename))
-        file.save(filename)
-        src = cv2.imread(filename)
+        filepath_original = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(file.filename))
+        filepath_downsampled = os.path.join(app.config['UPLOAD_FOLDER'], 'downsampled-' + secure_filename(file.filename))
+        filepath_upsampled = os.path.join(app.config['UPLOAD_FOLDER'], 'upsampled-' + secure_filename(file.filename))
+        filepath_maskimage = os.path.join(app.config['UPLOAD_FOLDER'], 'maskimage-' + secure_filename(file.filename))
+        filepath_tar = os.path.join(app.config['UPLOAD_FOLDER'], 'tar-' + secure_filename(file.filename) + '.tar')
+        filepath_lzma = filepath_tar + '.xz'
+
+        file.save(filepath_original)
+        src = cv2.imread(filepath_original)
         dest_inter_cubic = cv2.resize(src, None, fx=NUM_SCALE_DOWN, fy=NUM_SCALE_DOWN, interpolation = cv2.INTER_CUBIC)
-        cv2.imwrite(filename.replace(secure_filename(file.filename), "compressed-"+secure_filename(file.filename)), dest_inter_cubic)
-        os.remove(filename)
+        cv2.imwrite(filepath_original.replace(secure_filename(file.filename), "compressed-"+secure_filename(file.filename)), dest_inter_cubic)
+
+        src = cv2.imread(filepath_downsampled)
+        dest_inter_cubic = cv2.resize(src, None, fx=4, fy=4, interpolation = cv2.INTER_CUBIC)
+        cv2.imwrite(filepath_upsampled, dest_inter_cubic)
+
+        mask_image = semantic_segmentation.find_subjects(filepath_original)
+        upsampled_image = PIL.Image.open(filepath_upsampled)
+
+        w, h = mask_image.size
+        for x in range(0, w):
+            for y in range(0, h):
+                pixel = mask_image.getpixel((x,y))
+                if pixel[0] > 0 or pixel[1] > 0 or pixel[2] > 0:
+                    upscalePixel = upsampled_image.getpixel((x,y))
+                    r = pixel[0] - upscalePixel[0]
+                    g = pixel[1] - upscalePixel[1]
+                    b = pixel[2] - upscalePixel[2]
+                    mask_image.putpixel((x,y), (r,g,b))
+        mask_image.save(filepath_maskimage)
+
+        tar = tarfile.open(filepath_tarfile, "w")
+        for name in [filepath_maskimage, filepath_downsampled]:
+            tar.add(name)
+        tar.close()
+
+        # compress with lzma
+        call(["xz", filepath_tar])
+
+        os.remove(filepath_original)
+        os.remove(filepath_downsampled)
+        os.remove(filepath_upsampled)
+        os.remove(filepath_maskimage)
+        os.remove(filepath_tar)
         return redirect(url_for('files'))
 
 @app.route('/do_download', methods=['GET'])
 def download():
-    filename = request.args.get('name')
-    file = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    src = cv2.imread(file)
-    dest_inter_cubic = cv2.resize(src, None, fx=4, fy=4, interpolation = cv2.INTER_CUBIC)
-    os.remove(file)
-    cv2.imwrite(str(os.path.join(app.config['UPLOAD_FOLDER'], filename)), dest_inter_cubic)
-    return send_file(file, attachment_filename=filename.replace("compressed", "expanded"), as_attachment=True)
+    with tempfile.TemporaryFile() as temp_fp:
+        filename_original = os.path.join(app.config['UPLOAD_FOLDER'], 'tar-' + request.args.get('name') + '.tar.xz')
+
+        call(["tar", "xf", filename_original])
+        filepath_tar_folder = os.path.join(app.config['UPLOAD_FOLDER'], 'tar-' + request.args.get('name'))
+        filepath_maskimage = os.path.join(filepath_tar_folder, 'maskimage-' + secure_filename(file.filename))
+        filepath_downsampled = os.path.join(filepath_tar_folder, 'downsampled-' + secure_filename(file.filename))
+
+        src = cv2.imread(filepath_downsampled)
+        dest_inter_cubic = cv2.resize(src, None, fx=4, fy=4, interpolation = cv2.INTER_CUBIC)
+        cv2.imwrite(temp_fp.name, dest_inter_cubic)
+
+        mask_image = PIL.Image.open(filepath_maskimage)
+        temp_image = PIL.Image.open(temp_fp.name)
+
+        w, h = mask_image.size
+        for x in range(0, w):
+            for y in range(0, h):
+                pixel = mask_image.getpixel((x,y))
+                temp_pixel = temp_image.getpixel((x,y))
+                r = pixel[0] + temp_pixel[0]
+                g = pixel[1] + temp_pixel[1]
+                b = pixel[2] + temp_pixel[2]
+                temp_image.putpixel((x,y), (r,g,b))
+
+        os.remove(filepath_maskimage)
+        shutil.rmtree(filepath_tar_folder)
+
+        return send_file(temp_fp.name, attachment_filename=filename.replace("compressed", "expanded"), as_attachment=True)
 
 if __name__ == "__main__":
     app.secret_key = os.urandom(12)

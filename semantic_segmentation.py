@@ -136,7 +136,7 @@ def find_subjects(image_file, outpath = "output.jpg"):
     plt.savefig('output.png')
     subjects = subject_detection(decode_segmentation(output_im.getcolors()))
     output = create_filter(PILImage.open(image_file), output_im, subjects, outpath)
-
+    return output
 
 def decode_segmentation(colors):
     contents = []
@@ -197,7 +197,9 @@ def create_filter(input_im, output_im, subjects, out_path):
                     filter_im.im.putpixel((x,y), input_im.getpixel((x,y)))
                     break
     print out_path
+
     filter_im.save(out_path)
+    return filter_im
 
 def get_meaning_key(subject):
     for i in range(0, len(PALLETE_MEANING)):
