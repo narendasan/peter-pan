@@ -17,12 +17,7 @@
 
     <!-- Custom styles for this template -->
     <link href="{{ url_for('static', filename='css/files.css')}}" rel="stylesheet">
-
-    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-    <!--[if lt IE 9]>
-      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-    <![endif]-->
+    <link href="{{ url_for('static', filename='css/landing-page.css')}}" rel="stylesheet">
   </head>
 
   <body>
@@ -31,23 +26,22 @@
       <div class="header clearfix">
         <nav>
           <ul class="nav nav-pills pull-right">
-            <li role="presentation" class="active"><a href="/files">Files</a></li>
-            <li role="presentation"><a href="/do_logout">Logout</a></li>
+            <li role="presentation">
+              <label class="btn btn-default">
+                <a href="/do_logout">Logout</a>
+              </label>
+            </li>
           </ul>
         </nav>
         <h3>Peter Pan</h3>
       </div>
 
-      <h4 class="text-muted">Files</h4>
+      <h4>Files</h4>
       <div class="list-group">
         <a href="#" class="list-group-item">First item</a>
         <a href="#" class="list-group-item">Second item</a>
         <a href="#" class="list-group-item">Third item</a>
       </div>
-
-      <footer class="footer">
-        <p>Copyright &copy; Peter Pan 2016. All Rights Reserved</p>
-      </footer>
 
     </div> <!-- /container -->
 

@@ -32,6 +32,12 @@ def login():
     else:
         redirect(url_for('index'))
 
+@app.route('/register', methods=['GET'])
+def register():
+    return render_template('register.html')
+    
+
+
 @app.route('/do_login', methods=['POST'])
 def do_login():
     username = str(request.form['username'])
