@@ -17,20 +17,20 @@
 
     <!-- Custom styles for this template -->
     <link href="{{ url_for('static', filename='css/files.css')}}" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/landing-page.css')}}" rel="stylesheet">
   </head>
 
   <body>
     <div class="container">
       <div class="header clearfix">
-        <nav>
           <ul class="nav nav-pills pull-right">
-            <li role="presentation" class="active"><a href="/files">Files</a></li>
-            <li role="presentation"><a href="/upload">Upload</a></li>
-            <li role="presentation"><a href="/do_logout">Logout</a></li>
+            <li role="presentation"><img class="logosmall" src="{{ url_for('static', filename='img/logoblue.png')}}" /></li>
+            <li role="presentation"><h3>Peter Pan</h3></li>
+
+            <li role="presentation" style="float:right;"><a href="/do_logout">Logout</a></li>
+            <li role="presentation" style="float:right;"><a href="/upload">Upload</a></li>
+            <li role="presentation" class="active" style="float:right;"><a href="/files">Files</a></li>
+
           </ul>
-        </nav>
-        <h3>Peter Pan</h3>
       </div>
 
       <h4>Files</h4>
