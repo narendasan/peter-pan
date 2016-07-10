@@ -2,7 +2,9 @@ import json
 import os
 from os import listdir
 from os.path import isfile, join
+import tempfile
 
+import cv2
 from flask import Flask, flash, request, redirect, render_template, session, abort, url_for, send_file
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -13,6 +15,8 @@ from models import User
 
 UPLOAD_FOLDER = 'files/uploaded'
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif'])
+NUM_SCALE = 4
+NUM_SCALE_DOWN = 1 / NUM_SCALE
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
@@ -111,6 +115,11 @@ def do_upload():
         return redirect(request.url)
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
+
+        src = cv2.imread(filename)
+        dest_inter_cubic = cv2.resize(src, None, fx=NUM_SCALE_DOWN, fy=NUM_SCALE_DOWN)
+        cv2.imwrite(filename, dest_inter_cubic)
+
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         return redirect(url_for('files'))
 
@@ -118,7 +127,13 @@ def do_upload():
 def download():
     filename = request.args.get('name')
     file = (UPLOAD_FOLDER + '/' + filename)
-    return send_file(file, attachment_filename=filename, as_attachment=True)
+
+    expanded_fp = tempfile.TemporaryFile()
+    src = cv2.imread(file)
+    dest_inter_cubic = cv2.resize(src, None, fx=NUM_SCALE, fy=NUM_SCALE, interpolation = cv2.INTER_CUBIC)
+    cv2.imwrite(expanded_fp.name, dest_inter_cubic)
+
+    return send_file(expanded_fp.name, attachment_filename=filename, as_attachment=True)
 
 if __name__ == "__main__":
     app.secret_key = os.urandom(12)
