@@ -3,7 +3,7 @@ import os
 from os import listdir
 from os.path import isfile, join
 
-from flask import Flask, flash, request, redirect, render_template, session, abort, url_for
+from flask import Flask, flash, request, redirect, render_template, session, abort, url_for, send_file
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from werkzeug.utils import secure_filename
@@ -94,6 +94,12 @@ def do_upload():
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         return redirect(url_for('files'))
+
+@app.route('/do_download', methods=['GET'])
+def download():
+    filename = request.args.get('name')
+    file = (UPLOAD_FOLDER + '/' + filename)
+    return send_file(file, attachment_filename=filename, as_attachment=True)
 
 if __name__ == "__main__":
     app.secret_key = os.urandom(12)

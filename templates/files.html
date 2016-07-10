@@ -41,7 +41,7 @@
       <h4 class="text-muted">Files</h4>
       <div class="list-group">
         {% for key, value in data.iteritems() %}
-            <a href="#" class="list-group-item"><p align="left">{{ key }}</p> <p align="right">{{ value }} MB</p></a>
+            <a href="/do_download?name={{ key }}" class="list-group-item"><p align="left">{{ key }}</p> <p align="right">{{ value }} MB</p></a>
         {% endfor %}
       </div>
 
