@@ -30,20 +30,18 @@
       <div class="header clearfix">
         <nav>
           <ul class="nav nav-pills pull-right">
-            <li role="presentation" class="active"><a href="/files">Files</a></li>
-            <li role="presentation"><a href="/upload">Upload</a></li>
+            <li role="presentation"><a href="/files">Files</a></li>
+            <li role="presentation" class="active"><a href="/upload">Upload</a></li>
             <li role="presentation"><a href="/do_logout">Logout</a></li>
           </ul>
         </nav>
         <h3>Peter Pan</h3>
       </div>
 
-      <h4 class="text-muted">Files</h4>
-      <div class="list-group">
-        {% for key, value in data.iteritems() %}
-            <a href="#" class="list-group-item"><p align="left">{{ key }}</p> <p align="right">{{ value }} MB</p></a>
-        {% endfor %}
-      </div>
+        <form action="do_upload" method=post enctype=multipart/form-data>
+          <p><input type=file name=file> <br />
+             <input type=submit value=Upload>
+        </form>
 
       <footer class="footer">
         <p>Copyright &copy; Peter Pan 2016. All Rights Reserved</p>
