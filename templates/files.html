@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="../../favicon.ico">
+
+    <title>Peter Pan - Files</title>
+
+    <!-- Bootstrap core CSS -->
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+
+    <!-- Custom styles for this template -->
+    <link href="{{ url_for('static', filename='css/files.css')}}" rel="stylesheet">
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="header clearfix">
+          <ul class="nav nav-pills pull-right">
+            <li role="presentation"><img class="logosmall" src="{{ url_for('static', filename='img/logoblue.png')}}" /></li>
+            <li role="presentation"><h3>Peter Pan</h3></li>
+
+            <li role="presentation" style="float:right;"><a href="/do_logout">Logout</a></li>
+            <li role="presentation" style="float:right;"><a href="/upload">Upload</a></li>
+            <li role="presentation" class="active" style="float:right;"><a href="/files">Files</a></li>
+
+          </ul>
+      </div>
+
+      <h4>Files</h4>
+      <div class="list-group">
+        {% for key, value in data.iteritems() %}
+            <a href="/do_download?name={{ key }}" class="list-group-item"><p align="left">{{ key }}</p> <p align="right">{{ value }} MB</p></a>
+        {% endfor %}
+      </div>
+
+    </div> <!-- /container -->
+
+  </body>
+</html>
