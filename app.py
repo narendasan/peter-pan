@@ -1,8 +1,9 @@
+import json
 import os
 from os import listdir
 from os.path import isfile, join
 
-from flask import Flask, flash, request, redirect, render_template, session, abort, url_for
+from flask import Flask, flash, request, redirect, render_template, session, abort, url_for, send_file
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from werkzeug.utils import secure_filename
@@ -69,10 +70,22 @@ def files():
     else:
         file_names = set([f for f in listdir(UPLOAD_FOLDER) if isfile(join(UPLOAD_FOLDER, f))])
         file_names -= set(['.no_content'])
-        return render_template('files.html')
+        file_info = {}
+        for file in file_names:
+            filesize = os.stat(UPLOAD_FOLDER + '/' + file).st_size / float(10**6)
+            file_info[file] = filesize
 
-@app.route('/upload', methods=['POST'])
-def upload_file():
+        return render_template('files.html', data=file_info)
+
+@app.route('/upload', methods=['GET'])
+def upload():
+    if not session.get('logged_in'):
+        return render_template('login.html')
+    else:
+        return render_template('upload.html')
+
+@app.route('/do_upload', methods=['POST'])
+def do_upload():
     # check if the post request has the file part
     if 'file' not in request.files:
         flash('No file part')
@@ -86,8 +99,13 @@ def upload_file():
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        return redirect(url_for('upload_file',
-                                filename=filename))
+        return redirect(url_for('files'))
+
+@app.route('/do_download', methods=['GET'])
+def download():
+    filename = request.args.get('name')
+    file = (UPLOAD_FOLDER + '/' + filename)
+    return send_file(file, attachment_filename=filename, as_attachment=True)
 
 if __name__ == "__main__":
     app.secret_key = os.urandom(12)
